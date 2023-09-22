@@ -1,0 +1,6 @@
+data:
+  rawdata: '/home/50cm/data2/raw/'
+  rootpath: '/home/50cm/50cm_scripts/50cm_pro/'
+refcat:
+  gaia: '/home/50cm/data2/GAIAEDR3New/'
+  #gaia: '/home/50cm/data2/GaiaDR3FITS_pm/'
