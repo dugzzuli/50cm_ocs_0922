@@ -86,16 +86,28 @@ def ttfname_split(ttfname):
 def ttfname_header(filename):
     hdr=fits.getheader(filename)
     #OBJECT  = 'y50b_HZ44_'
-    logger.error(hdr)     ###202309121713 zhangjh 
+    # logger.error(hdr)     ###202309121713 zhangjh 
     tt=hdr['OBJECT']
     try: 
         tid = hdr['TELEID'].strip().lower()
         target = hdr['OBJECT'].strip()
         filterid = 'm'+hdr['FILTER'].strip()
     except:
-        logger.error(traceback.format_exc())     ###202309121713 zhangjh
-        tid,target = tt.split('_')[0],tt.split('_')[1]
+        
+        # logger.error(traceback.format_exc())     ###202309121713 zhangjh
+        logger.info(f"tt:{tt}")
+        if str(filename).lower().__contains__('50a'):
+            tid="y50a"
+            target =tt
+        elif str(filename).lower().__contains__('50b'):
+            tid="y50b"
+            target =tt
+        else:
+            tid= tt.split('_')[0]
+            target =tt.split('_')[1]    
+        
         filterid='m'+hdr['FILTER']
+        logger.info(f"{tid.replace(' ',''),target.replace(' ',''),filterid.replace(' ','')}")
     return tid.replace(' ',''),target.replace(' ',''),filterid.replace(' ','')
 
 

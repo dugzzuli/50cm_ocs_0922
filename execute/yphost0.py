@@ -167,14 +167,14 @@ def wcs(iobjFrame_o0,config_cfg):
             logger.info(ahead +' delete failed')
     
     if("OBJCTRA" in ihdr.keys()):
-            ira  = ":".join(ihdr["OBJCTRA"].split())
-            idec = ":".join(ihdr["OBJCTDEC"].split())
-            tra, tdec = d2hms(ira, idec, conv=1)
+        ira  = ":".join(ihdr["OBJCTRA"].split())
+        idec = ":".join(ihdr["OBJCTDEC"].split())
+        tra, tdec = d2hms(ira, idec, conv=1)
     elif("RA" in ihdr.keys()):
-            ira  = ":".join(ihdr["RA"].split())
-            idec = ":".join(ihdr["DEC"].split())
-            tra, tdec = d2hms(ira, idec, conv=1)
-    
+        ira  = ":".join(ihdr["RA"].split())
+        idec = ":".join(ihdr["DEC"].split())
+        tra, tdec = d2hms(ira, idec, conv=1)
+
 
     tra= str(tra) 
     tdec=str(tdec)  
@@ -196,16 +196,16 @@ def wcs(iobjFrame_o0,config_cfg):
     
      
     try:
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.match')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.new')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.rdls')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.axy')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.corr')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'-indx.xyls')
-            os.system("rm %s" % iobjFrame_o0[:-5]+'.solved')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.match')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.new')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.rdls')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.axy')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.corr')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'-indx.xyls')
+        os.system("rm %s" % iobjFrame_o0[:-5]+'.solved')
             
     except:
-            logger.error('there is no any pdf file')
+        logger.error('there is no any pdf file')
         
     wcsfile=iobjFrame_o0[:-5]+'.wcs'
     iimgMat,hdr_sciimg = fits.getdata(iobjFrame_o0,header=True)
@@ -288,43 +288,28 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
         elif("RA" in hdr.keys()):
             pass
         else:
-            logger.info("XXXXXXXXXXXXXXXXX the fits file is broken: %s"%(iobjFrameNew))
+            
             url = 'http://12.12.12.251:8888/process_request'
             params = {"eid": source_file, "reason": "RA or DEC doesn't exist","stage": 0}
             response = make_get_request(url, params)
-            return None, None
+            
+            raise("XXXXXXXXXXXXXXXXX the fits file is broken: %s"%(iobjFrameNew))
             
             
             
     
         ##################
-
-        
-        
-        
-         
         logger.info(iobjFrameNew)
-        # if os.path.exists( iobjFrame_o0[:-5] + "_sexcat.fits") and config["log"]["record"]:
-        #     #print(iobjFrame_o0[:-5] + '_sexcat.fits'+' was been phot processd! ')
-        #     ildacn = iobjFrame_o0[:-4] + "ldac"
-        #     return ildacn,iobjFrame_o0
-
         logger.info(iobjFrame_o0)
         ################################################
         ipsfFrameNew = iobjFrame_o0[:-4] + "psf"
          
         
         
-        try:
-            ihdr,iimgMat= readfits(iobjFrame_o0)
-            r,c=np.shape(iimgMat)
-        except Exception as e:
-            logger.info(f'the fits file is broken:{iobjFrameNew}')
-            logger.info("XXXXXXXXXXXXXXXXX the fits file is broken: %s"%(iobjFrameNew))
-            url = 'http://12.12.12.251:8888/process_request'
-            params = {"eid": source_file, "reason": "the fits file is broken: -------"+str(traceback.format_exc()),"stage": 2}
-            response = make_get_request(url, params)
-            return None, None
+        
+        ihdr,iimgMat= readfits(iobjFrame_o0)
+        r,c=np.shape(iimgMat)
+
  
         binfact=int(ihdr['XBINNING'])
         pscale  = 0.297 * binfact # pixel scale in unit of arcsec
@@ -380,50 +365,49 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
 
         
         #######astrometry##############
+        
         iimgMat,ihdr=fits.getdata(iobjFrame_o0,header=True)
-        logger.info(ihdr)          ###202309121737  zhangjh
+        # logger.info(ihdr)          ###202309121737  zhangjh
         exptime=ihdr['EXPTIME']
         ildacn = iobjFrame_o0[:-4] + "ldac"
         
         saturate_value=ihdr['SATURATE']*0.9
         exptlast = ihdr['EXPTIME']
         logger.error(ttfname)
-        #tid, objID, filterid=ttfname.split('_')
-        ###修改为：202309121745  zhangjh
-        #tid = hdr['TELEID'].strip().lower()
-        objID = hdr['OBJECT'].strip()
+        
+        objID = hdr['OBJECT'].strip().replace(" ", "")
+        if str(objID).__contains__("y50a") or str(objID).__contains__("y50b"):
+            objID=objID[5:]
         filterid = 'm'+hdr['FILTER'].strip()
         ############################################
     
-        
-        # isexComd = sexComd % (iobjFrameNew, sexConf, sexParam1, ildacn, str(saturate_value))
-        # sex_comd(isexComd)
-        
         refCatn  = ancdir + "GaiaStar_%s_%s_%s.ldac"%(objID,filterid,date)
+        refCatn=refCatn.replace("__", "_")
         refCat2n = ancdir + "GaiaStar_%s_%s_%s.cat"%(objID,filterid,date)
+        refCat2n=refCat2n.replace("__", "_")
+        refCat2=None
+    
         logger.info(refCat2n)
         if not (os.path.exists(refCat2n)):#(1==1):
- 
-            maxmaglim=ref_expt_select(configdir,filterid,binfact,exptlast)
             logger.info(f'ira={ira}, idec={idec}')
+            maxmaglim=ref_expt_select(configdir,filterid,binfact,exptlast)
             refSed_gaia_filter(rootpath,ttfname,date,ira,idec,10,maxmaglim)
             #refSed_gaia(rootpath,ttfname,date,ira,idec,10,maxmaglim)
-            
-            
+        else:
+            try:
+                refCat2  = Table.read(refCat2n, format="ascii")
+            except:
+                maxmaglim=ref_expt_select(configdir,filterid,binfact,exptlast)
+                refSed_gaia_filter(rootpath,ttfname,date,ira,idec,10,maxmaglim)
+            finally:
+                
+                logger.info(f'ira={ira}, idec={idec}')
+                
+                refCat2  = Table.read(refCat2n, format="ascii")
+                
+        if not refCat2:
+            raise(f'''Table.read({refCat2n}, format="ascii") is failed''')
         
-        # try:
-        #     # magRef   = refCat2["mag%s"%filtID.upper()]
-        #     refCat2  = Table.read(refCat2n, format="ascii")
-        #     raRef    = refCat2["ra"]
-        #     decRef   = refCat2["dec"]
-        #     magRef  = refCat2["mag"]
-        # except:
-        #     logger.info('the filteris is '+filterid.upper()+' and use mag_nofilter only')
-        #     magRef  = refCat2["mag"]    
-        #nrefStar = len(raRef)
-        
-        
-        refCat2  = Table.read(refCat2n, format="ascii")
         logger.info(refCat2n)
         raRef    = refCat2["ra"]
         decRef   = refCat2["dec"]
@@ -437,11 +421,11 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
                  
             wcs(iobjFrame_o0,config_cfg)
             
-        
         try:
             
             isexComd = sexComd_Astro % (iobjFrame_o0, sexConf, sexParam1, ildacn, str(saturate_value))
-             
+            logger.info(isexComd)
+            
             s_return=sex_comd(isexComd)
             if(s_return==0):
                 try:
@@ -459,8 +443,6 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
          
             try:
                 ixcenloc=np.where((ildac["X_IMAGE"]>c/2+10) | (ildac["X_IMAGE"]<c/2-10))
-                #ixyloc=np.where((iximg<c-(1000/binfact))&(iximg>1000/binfact))#&(iyimg<6100)&(iyimg>30))
-
                 ildac =ildac[ixcenloc]
                 hdul=fits.open(ildacn)###
                 hdul[1].data=ildac
@@ -497,23 +479,24 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
                 astro=astrometry(ildacn,refCatn,iobjFrame_o0,scampComd, scampConf, scampConf2,configdir)
 
                 if astro is None:
-                        #logger.error(f"os.path.exists(ihead)==False: {os.path.exists(ihead)==False}")
-                        try:
-                            url = 'http://12.12.12.251:8888/process_request'
-                            params = {"eid": source_file, "reason": f"astrometry is failed,crossmatch len(idRef)={len(idRef)},len(ids)={len(ids)}","stage": 1}
-                            #params = {"eid": source_file, "reason": "astrometry is failed","stage": 1}
-                            response = make_get_request(url, params)
-                            return None,None
-                        except:
-                            pass
-                        logger.info(f"the astrometry is failed, ending this loop")
+                    #logger.error(f"os.path.exists(ihead)==False: {os.path.exists(ihead)==False}")
+                    try:
+                        url = 'http://12.12.12.251:8888/process_request'
+                        params = {"eid": source_file, "reason": f"astrometry is failed,crossmatch len(idRef)={len(idRef)},len(ids)={len(ids)}","stage": 1}
+                        #params = {"eid": source_file, "reason": "astrometry is failed","stage": 1}
+                        response = make_get_request(url, params)
                         return None,None
+                    except:
+                        pass
+                    logger.info(f"the astrometry is failed, ending this loop")
+                    return None,None
                 
             ildac = fits.getdata(ildacn, ext=2)
             ira = ildac["ALPHA_J2000"]
             idec = ildac["DELTA_J2000"] 
              
             idRef, ids = crossmatch(raRef, decRef, ira, idec, aperture=1.5)     
+            
             if len(idRef)<20 :
                     
                 logger.info(f'len(idRef)={len(idRef)}')
@@ -532,14 +515,14 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
             
             else:
                 isexComd = sexComd_Astro % (iobjFrame_o0, sexConf, sexParam1, ildacn, str(saturate_value))
+                logger.info(isexComd)
                 sex_comd(isexComd)
                 
                 ildac = fits.getdata(ildacn, ext=2)
                 logger.info(f'#########the star count of detection for astrometry={len(ildac)}')
                 ira = ildac["ALPHA_J2000"]
                 idec = ildac["DELTA_J2000"] 
-                he=fits.getheader(iobjFrame_o0)
-                #logger.info(he)
+
                 idRef, ids = crossmatch(raRef, decRef, ira, idec, aperture=1.5)     
                 logger.info(f"crossmatch(raRef, decRef, ira, idec, aperture=1.5),len(idRef)={len(idRef)},len(ids)={len(ids)}")
                 idra = 3600.0 * (ira[ids] - raRef[idRef])*np.cos(np.radians(decRef[idRef]))
@@ -597,17 +580,10 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
             return None,None  
             
         logger.info(f"[_mphot]: 2) determine the astrometric accuracy")
-
-
-        
-     
         try:
             ################psf phot#####################
             ipsfFrameNew = iobjFrame_o0[:-4] + "psf"
             psfexComd  = "psfex %s -c %s -PSF_SIZE %s,%s -PSF_DIR %s"
-            # isexComd = sexComd % (iobjFrame_o0, sexConf, sexParam1, ildacn, saturate_value)
-            # os.system(isexComd)
-
             hdul=fits.open(ildacn)###
             hdul[1].data=ildac
             ixcenloc=np.where((ildac["FLAGS"]==0)) 
@@ -622,20 +598,9 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
             ipsfComd = psfexComd % (ildacn, psfexConf, str(kernel_size), str(kernel_size), tscidir)
             logger.info(ipsfComd) #增加日志输出，202309081945
             psf_comd(ipsfComd)
-            
-            # logger.info("[_mphot]:"+"    Generate final SExtractor catalog")
-            # isexComd = sexComdPSF % (iobjFrame_o0, sexConf, sexParam2, ildacn, str(saturate_value), ipsfFrameNew)
-            # sex_comd(isexComd)
-            # if(binfact == 2):
-            #     ipsfComd = psfexComd % (ildacn, psfexConf, str(21), str(21), tscidir)
-            # elif(binfact == 1):
-            #     ipsfComd = psfexComd % (ildacn, psfexConf, str(42), str(42), tscidir)
-            # else:
-            #     ipsfComd = psfexComd % (ildacn, psfexConf, str(21), str(21), tscidir)
-            # psf_comd(ipsfComd)
-            
             logger.info("[_yphot]:"+"    Generate final SExtractor catalog")
             isexComd = sexComdPSF % (iobjFrame_o0, sexConf, sexParam2, ildacn, str(saturate_value), ipsfFrameNew)
+            logger.info(f"sexComdPSF:{isexComd}")
             sex_comd(isexComd)
 
             ihdr = fits.getheader(iobjFrame_o0)
@@ -729,7 +694,7 @@ def single_cmd_deal(i_obj_file,source_file,ttfname,date,sexComd,sexComd_Astro,se
                          'FLUX_AUTO_S':ifluxAUTO_s ,'FLUXERR_AUTO_S':ifluxErrAUTO_s ,'FLUX_PSF_S':ifluxPSF_s,'FLUXERR_PSF_S':ifluxErrPSF_s, 'FLUX_APER_S':ifluxAPER_s,'FLUXERR_APER_S':ifluxErrAPER_s })
             zat = hstack([cat, dat])
             hdul[2].data =np.array(zat)
-            logger.info(f"np.array(zat):{np.array(zat)}")
+            
             #hdul.writeto(ildacn, overwrite=True)
             #hdul.writeto(iobjFrame_o0[:-5] + "_sexcat.fits", overwrite=True)
             hdul.writeto(iobjFrame_o0[:-5] + "_sexcat.fits", overwrite=True)
@@ -946,7 +911,7 @@ def astrometry(ildacn,refCatn,iobjFrame_o0,scampComd, scampConf, scampConf2,figd
     try:
         iscampComd = scampComd%(ildacn,scampConf,refCatn)
         #os.system(iscampComd)
-        
+        logger.info(iscampComd)
         scamp_comd(iscampComd)
 
 
@@ -957,18 +922,12 @@ def astrometry(ildacn,refCatn,iobjFrame_o0,scampComd, scampConf, scampConf2,figd
         os.system("mv %s %s"%(ihead,ihead1))
         iscampComd2 = scampComd%(ildacn,scampConf2,refCatn)
          
-        #os.system(iscampComd2)
+        logger.info(iscampComd2)
         scamp_comd(iscampComd2)
  
     except Exception as e:
         logger.error('scamp is calling failed!')
          
-    
-        # if(os.path.exists(ihead)==False):
-        #     logger.error(f"os.path.exists(ihead)==False: {os.path.exists(ihead)==False}")
-        #     logger.info(f"ending this loop")
-
-        #     return None,None
     ihead = ildacn[:-4] + "head"
     if(os.path.exists(ihead)):
         
@@ -1007,6 +966,7 @@ def astrometry(ildacn,refCatn,iobjFrame_o0,scampComd, scampConf, scampConf2,figd
 
 
 def photometry(rootpath,ttfname,date):
+    
     upath=rootpath+'reception/'+str(date)+'/'
     scipath = upath+'sci/'+ttfname+'/'
     logger.info(scipath+'fileguide/'+ttfname+'_sciimg.npy')

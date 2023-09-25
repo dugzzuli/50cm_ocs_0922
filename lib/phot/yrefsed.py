@@ -19,7 +19,7 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.time import Time
-
+from execute import yphotutils
 def read_param(filename):
     pfile = open(filename).readlines()
     nn = len(pfile)
@@ -633,11 +633,16 @@ def refSed_gaia(rootpath,ttfname,date,refSky_ra,refSky_dec,maglim_min=10.0,magli
 def refSed_gaia_filter(rootpath,ttfname,date,refSky_ra,refSky_dec,maglim_min=8.0,maglim_max=21.0):
     ancdir  = rootpath + "ancData/"
     t0 = time.time()  
-    try:
-        tid,objID,filterid=ttfname.split('_')
-    except:
-        tid,obj1,obj2,filterid=ttfname.split('_')
-        objID = obj1+'_'+obj2
+    temp_arr=ttfname.split('_')
+    if len(temp_arr)==4:
+        tid,objID,filterid=temp_arr[0],temp_arr[1]+"_"+temp_arr[2],temp_arr[3] #yphotutils.ttfname_header(ttfname)
+    else:
+        tid,objID,filterid=temp_arr
+    # try:
+    #     tid,objID,filterid=ttfname.split('_')
+    # except:
+    #     tid,obj1,obj2,filterid=ttfname.split('_')
+    #     objID = obj1+'_'+obj2
     from config import config
     refCatDir = config["refcat"]["gaia"]
     logger.info(f'the date is {date}')

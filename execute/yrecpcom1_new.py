@@ -3,7 +3,6 @@ import os
 import sys
 import glob
 import numpy as np
-from numpy.lib.polynomial import _roots_dispatcher
 import pandas as pd
 from astropy.io import fits
 from config import config
@@ -13,21 +12,12 @@ from lib.LogInstance import Logger
 from lib.phot.ycalcom1 import savenpy, splitfilename
 from lib.phot.ybias import get_current_dir
 
-# from numba import jit
-# @jit #(nopython=True)
+
 def datamove(spath,tpath):#here spath must be a filepath not a dir
-    # adding exception handling
-    #if(1==1):
+
     if(os.path.exists(tpath)):
         logger.info('the tpath is: {}'.format(tpath))
         logger.info('the files you want to move may exists')
-        sfile=len(glob.glob(spath+'*.fit*'))
-        tfile=len(glob.glob(tpath+'*.fit*'))
-        # print(spath)
-        # testfiles=glob.glob(spath+'*.fits')
-        #print(testfiles)
-        # if(tfile-sfile>0 or tfile==0):
-        #     logger.info('the files you want to move may not complete in your target directory,we will move them again')
         if(1==1):
             for fit_file in glob.glob(spath+'*.fit*'):
                 # print(fit_file)
@@ -66,8 +56,6 @@ def ttfname_header(filename):
     #OBJECT  = 'y50b_HZ44_' 
     tt=hdr['OBJECT']
     try:
-        # logger.info('######################################')
-        # logger.info(tt)
         tid,target = tt.split('_')[0],tt.split('_')[1]
         filterid='m'+hdr['FILTER'].lower()
 
@@ -260,10 +248,10 @@ def darkclassify_new(rawdir,fileguide_path):
         filepath,tempfilename = os.path.split(fdlist[j])
         try:
           
-           hdr=fits.getheader(fdlist[j])
-            
-           tid = hdr['TELEID'].lower()
-           dlistbin.append(list([fdlist[j],str(tid), hdr['XBINNING']]))
+            hdr=fits.getheader(fdlist[j])
+                
+            tid = hdr['TELEID'].lower()
+            dlistbin.append(list([fdlist[j],str(tid), hdr['XBINNING']]))
         #    exp =int(hdr['EXPOSURE'])
         #    dlistbin.append(list([fdlist[j],str(tid), hdr['XBINNING'],str(exp)]))
         except:
@@ -304,13 +292,13 @@ def biasclassify_new(rawdir,fileguide_path):
     for j in range(0,len(fblist)):
         filepath,tempfilename = os.path.split(fblist[j])
         try:
-           #tid,objectname,file_id=tempfilename.split('_')
-           hdr=fits.getheader(fblist[j])
-           tid = hdr['TELEID'].lower()
-           blistbin.append(list([fblist[j],str(tid), hdr['XBINNING']]))
+            #tid,objectname,file_id=tempfilename.split('_')
+            hdr=fits.getheader(fblist[j])
+            tid = hdr['TELEID'].lower()
+            blistbin.append(list([fblist[j],str(tid), hdr['XBINNING']]))
         except:
-           logger.info('the bias file: ' +tempfilename+' is can not be splited, please check' )
-           continue
+            logger.info('the bias file: ' +tempfilename+' is can not be splited, please check' )
+            continue
     # for var in np.sort(scilist):
     blistbin=np.array(blistbin)
     try:
@@ -358,7 +346,7 @@ def flatclassify_new(rawdir,fileguide_path):
             logger.info(tbname+'  count: {}'.format(len(list(values['filename']))))
             savenpy(fileguide_path,tbname+'.npy',list(values['filename']))
     except:
-         logger.info('the flat file is not exists or filename is not qualify,please check!')
+        logger.info('the flat file is not exists or filename is not qualify,please check!')
 
     return flistbin   
 
@@ -371,24 +359,24 @@ def darkclassify(rawdir,fileguide_path):
     for j in range(0,len(fdlist)):
         filepath,tempfilename = os.path.split(fdlist[j])
         try:
-           tid,objectname,file_id=tempfilename.split('_')
-           hdr=fits.getheader(fdlist[j])
-           
-           dlistbin.append(list([fdlist[j],str(tid), hdr['XBINNING']]))
+            tid,objectname,file_id=tempfilename.split('_')
+            hdr=fits.getheader(fdlist[j])
+            
+            dlistbin.append(list([fdlist[j],str(tid), hdr['XBINNING']]))
         except:
-           logger.info('the dark file: ' +tempfilename+' is can not be splited, please check' )
-           continue
+            logger.info('the dark file: ' +tempfilename+' is can not be splited, please check' )
+            continue
     # for var in np.sort(scilist):
     dlistbin=np.array(dlistbin)
     try:
-       darkdf=pd.DataFrame({'filename':list(dlistbin[:,0]),'tid':list(dlistbin[:,1]),'bins':list(dlistbin[:,2])})
-       darkgroup = darkdf.groupby(['tid','bins'])
-       for key,values in darkgroup:
-           tdname=str(key[0])+'_dark_bin'+str(key[1])
-           logger.info(tdname+'  count: {}'.format(len(list(values['filename']))))
-           savenpy(fileguide_path,tdname+'.npy',list(values['filename']))
+        darkdf=pd.DataFrame({'filename':list(dlistbin[:,0]),'tid':list(dlistbin[:,1]),'bins':list(dlistbin[:,2])})
+        darkgroup = darkdf.groupby(['tid','bins'])
+        for key,values in darkgroup:
+            tdname=str(key[0])+'_dark_bin'+str(key[1])
+            logger.info(tdname+'  count: {}'.format(len(list(values['filename']))))
+            savenpy(fileguide_path,tdname+'.npy',list(values['filename']))
     except:
-         logger.info('the dark  file is not exists or filename is not qualify,please check!')
+        logger.info('the dark  file is not exists or filename is not qualify,please check!')
     return dlistbin
 
 def dataclassify(rawdir,fileguide_path):
@@ -444,29 +432,27 @@ def dataclassify(rawdir,fileguide_path):
 
 def biasclassify(rawdir,fileguide_path):
     fblist = glob.glob(rawdir+'*bias*.fit*')
-    fflist = glob.glob(rawdir+'*flat*.fit*')
-    fdlist = glob.glob(rawdir+'*dark.fit*')
     blistbin = []
     for j in range(0,len(fblist)):
         filepath,tempfilename = os.path.split(fblist[j])
         try:
-           tid,objectname,file_id=tempfilename.split('_')
-           hdr=fits.getheader(fblist[j])
-           blistbin.append(list([fblist[j],str(tid), hdr['XBINNING']]))
+            tid,objectname,file_id=tempfilename.split('_')
+            hdr=fits.getheader(fblist[j])
+            blistbin.append(list([fblist[j],str(tid), hdr['XBINNING']]))
         except:
-           logger.info('the bias file: ' +tempfilename+' is can not be splited, please check' )
-           continue
+            logger.info('the bias file: ' +tempfilename+' is can not be splited, please check' )
+            continue
     # for var in np.sort(scilist):
     blistbin=np.array(blistbin)
     try:
-       biasdf=pd.DataFrame({'filename':list(blistbin[:,0]),'tid':list(blistbin[:,1]),'bins':list(blistbin[:,2])})
-       biasgroup = biasdf.groupby(['tid','bins'])
-       for key,values in biasgroup:
-           tbname=str(key[0])+'_bias_bin'+str(key[1])
-           logger.info(tbname+'  count: {}'.format(len(list(values['filename']))))
-           savenpy(fileguide_path,tbname+'.npy',list(values['filename']))
+        biasdf=pd.DataFrame({'filename':list(blistbin[:,0]),'tid':list(blistbin[:,1]),'bins':list(blistbin[:,2])})
+        biasgroup = biasdf.groupby(['tid','bins'])
+        for key,values in biasgroup:
+            tbname=str(key[0])+'_bias_bin'+str(key[1])
+            logger.info(tbname+'  count: {}'.format(len(list(values['filename']))))
+            savenpy(fileguide_path,tbname+'.npy',list(values['filename']))
     except:
-         logger.info('the bias  file is not exists or filename is not qualify,please check!')
+        logger.info('the bias  file is not exists or filename is not qualify,please check!')
     return blistbin
 
 def flatclassify(rawdir,fileguide_path):
@@ -493,7 +479,7 @@ def flatclassify(rawdir,fileguide_path):
             logger.info(tbname+'  count: {}'.format(len(list(values['filename']))))
             savenpy(fileguide_path,tbname+'.npy',list(values['filename']))
     except:
-         logger.info('the flat file is not exists or filename is not qualify,please check!')
+        logger.info('the flat file is not exists or filename is not qualify,please check!')
 
     return flistbin     
 

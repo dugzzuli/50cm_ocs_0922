@@ -26,7 +26,7 @@ from loguru import logger
 
 from execute.yphotutils import datename,d2hms
 from execute.yphotutils import make_get_request,datename,d2hms,mad,wds9reg,read_param,crossmatch,reg,ref_expt_select,readfits,hdr_edit_fits,re_hdr_edit_fits,read_list,timeplus,HJDTrans,get_scamp_head,overlapRect,pointRect,_spherical_to_cartesian,_great_circle_distance,mkdir
-
+from execute import yphotutils
 
 
 
@@ -74,76 +74,55 @@ def calibration1(ipath,opath):
             if not os.path.exists(opath+tid+'_master_bias_'+bins+'_o1.fits'):
                 logger.info('there is no mbias for '+tid+'  this day, begin to generate')
                 try:
-                   bfiles=np.load(ipath+'fileguide/'+tid+'_bias_'+bins+'.npy')
-                   yb.masterbias(ipath,opath,bfiles,tid,bins,nsigma=3)
+                    bfiles=np.load(ipath+'fileguide/'+tid+'_bias_'+bins+'.npy')
+                    yb.masterbias(ipath,opath,bfiles,tid,bins,nsigma=3)
                 except Exception as e:
-                   logger.error(str(traceback.format_exc()))
-                   logger.error('the bias genpro is failed ')
+                    logger.error(str(traceback.format_exc()))
+                    logger.error('the bias genpro is failed ')
 
 
             hdark = glob.glob(opath+tid+'_master_dark_'+bins+'*_o1.fits')
             if not (hdark):
             #if not os.path.exists(opath+tid+'_master_dark_'+bins+'*_o1.fits'):
-               logger.info('there is no mdark for '+tid+'  this day, begin to generate')
-               try:
-                  dfiles=np.load(ipath+'fileguide/'+tid+'_dark_'+bins+'.npy',allow_pickle=True)
-                  yd.masterdark(ipath,opath,dfiles,tid,bins,nsigma=3)
-                  #yd.masterdark(ipath,opath,tid,bins,nsigma=3)
-               except Exception as e:
-                  logger.error(str(traceback.format_exc()))
-                  logger.error('the dark genpro is failed ')
+                logger.info('there is no mdark for '+tid+'  this day, begin to generate')
+                try:
+                    dfiles=np.load(ipath+'fileguide/'+tid+'_dark_'+bins+'.npy',allow_pickle=True)
+                    yd.masterdark(ipath,opath,dfiles,tid,bins,nsigma=3)
+                    #yd.masterdark(ipath,opath,tid,bins,nsigma=3)
+                except Exception as e:
+                    logger.error(str(traceback.format_exc()))
+                    logger.error('the dark genpro is failed ')
 
         for item in flist:
             tid,objname,filterid,bins=(ygn.get_filename(item)[1]).split("_")
-
             if not( os.path.exists(opath+tid+'_'+filterid+'_'+bins+'_gn.npy')):
                 logger.info('there is no gn for this day, begin to generate gn')
-                try:
+                temp_npy=ipath+'fileguide/'+tid+'_bias_'+bins+'.npy'
+                if os.path.exists(temp_npy):
                     bfiles=np.load(ipath+'fileguide/'+tid+'_bias_'+bins+'.npy',allow_pickle=True)
-                except Exception as e:
-                    logger.error(str(traceback.format_exc()))
-                    bfiles=np.load(ipath+'fileguide/'+tid+'_Bias_'+bins+'.npy',allow_pickle=True)
+                
                 ffiles=np.load(ipath+'fileguide/'+tid+'_flat_'+filterid+'_'+bins+'.npy',allow_pickle=True)
                 try:
-                   ygn.check_gn(ipath,opath)
+                    ygn.check_gn(ipath,opath)
                 except Exception as e:
-                   logger.error(str(traceback.format_exc()))
-                   logger.error('the gn genpro is failed ')
+                    logger.error(f"the gn genpro is failed :{str(traceback.format_exc())}")
 
-            # if not os.path.exists(opath+tid+'_master_bias_'+bins+'_o1.fits'):
-            #     logger.info('there is no mbias for '+tid+'  this day, begin to generate')
-            #     try:
-            #        bfiles=np.load(ipath+'fileguide/'+tid+'_bias_'+bins+'.npy',allow_pickle=True)
-            #        yb.masterbias(ipath,opath,bfiles,tid,bins,nsigma=3)
-            #     except Exception as e:
-            #        logger.error(str(traceback.format_exc()))
-            #        logger.error('the bias genpro is failed ')
-             
+
             if not os.path.exists(opath+tid+'_master_flat_'+filterid+'_'+bins+'_o1.fits'):
                 logger.info('there is no mflat for '+tid+'+'+filterid+'+'+bins+'  this day and this filter, begin to generate')
                 try:
-                   ffiles=np.load(ipath+'fileguide/'+tid+'_flat_'+filterid+'_'+bins+'.npy',allow_pickle=True)
+                    ffiles=np.load(ipath+'fileguide/'+tid+'_flat_'+filterid+'_'+bins+'.npy',allow_pickle=True)
                 #yf.master_lflat(ipath,opath,ffiles,tid,filterid,bins)
-                   yf.master_flat(ipath,opath,ffiles,tid,filterid,bins)
+                    yf.master_flat(ipath,opath,ffiles,tid,filterid,bins)
                 except Exception as e:
-                   logger.error(traceback.format_exc())
-                   logger.error('the flat genpro is failed ')
+                    logger.error(traceback.format_exc())
+                    logger.error('the flat genpro is failed ')
+                    
     logger.info('calibration files is prepared')
 
  
     
-def ttfname_header(filename):
-    hdr=fits.getheader(filename)
-    #OBJECT  = 'y50b_HZ44_' 
-    tt=hdr['OBJECT']
-    try: 
-        tid = hdr['TELEID'].strip().lower()
-        target = hdr['OBJECT'].strip()
-        filterid = 'm'+hdr['FILTER'].strip()
-    except:
-        tid,target = tt.split('_')[0],tt.split('_')[1]
-        filterid='m'+hdr['FILTER']
-    return tid,target,filterid
+
 
 
 def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
@@ -172,7 +151,7 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
         return fileguidelist
     
     try:
-        tid,objectid,filterid=ttfname_header(filepath)
+        tid,objectid,filterid=yphotutils.ttfname_header(filepath)
         logger.info('++++++++++++++++++++++++++++++++++++++++')
         logger.info("{},{},{}".format(tid,objectid,filterid))
      
@@ -206,8 +185,6 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
         except:
             pass
         
-    icountmax=np.nanmax(img)
-    #data = CCDData(img, unit=u.adu)
     img1=img[:,0:int(c/2)]
     img2=img[:,int(c/2):int(c)]
     #logger.info(filepath)
@@ -215,12 +192,6 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
     logger.info(np.shape(img2))
     #=================================================================fits头读取和参数增加与设置
     
-    exptime = float(hdr_ccd['EXPTIME'])
-    #pierside=hdr_ccd['PIERSIDE']
-    #logger.info(binfact)
-    pscale  = 0.297 * binfact # pixel scale in unit of arcsec
-    yearmonth=str(date)[:-2]
-    #logger.info(calpath+tid+'_mg_bin'+str(binfact)+'_gn.npy')
     try:
         if os.path.exists(calpath+tid+'_mr_bin'+str(binfact)+'_gn.npy'):
             #logger.info(calpath+tid+'_mg_bin'+str(binfact)+'_gn.npy')
@@ -230,12 +201,7 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
             noise1=gn[0][1]
             gain2 =gn[1][0]
             noise2=gn[1][1]
-        # elif os.path.exists(calpath+tid+'_mr_bin'+str(binfact)+'_gn.npy'):
-        #     gn=np.load(calpath+tid+'_mr_bin'+str(binfact)+'_gn.npy',allow_pickle=True) 
-        #     gain1 =gn[0][0]
-        #     noise1=gn[0][1]
-        #     gain2 =gn[1][0]
-        #     noise2=gn[1][1]
+
         elif os.path.exists(calpath+tid+'_mi_bin'+str(binfact)+'_gn.npy'):
             gn =np.load(calpath+tid+'_mi_bin'+str(binfact)+'_gn.npy',allow_pickle=True) 
             gain1 =gn[0][0]
@@ -244,9 +210,6 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
             noise2=gn[1][1]
         elif os.path.exists(libpath):
             print('there is no gn this day,change to libpath##########################3')
-            #print(libpath+tid+'_mg_bin'+str(binfact)+'_gn_'+ yearmonth+'*.npy')
-            # cgnrlist=glob.glob(libpath+tid+'_mg_bin'+str(binfact)+'_gn_'+ yearmonth+'*.npy')
-            # cgnglist=glob.glob(libpath+tid+'_mr_bin'+str(binfact)+'_gn_'+ yearmonth+'*.npy')
             cgnrlist=glob.glob(libpath+tid+'_mr_bin'+str(binfact)+'_gn_*.npy')
             cgnglist=glob.glob(libpath+tid+'_mi_bin'+str(binfact)+'_gn_*.npy')
             print(cgnrlist)
@@ -276,28 +239,28 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
         logger.info('$$$$$$$$$$$$$$calibration is ok $$$$$$$$$$$$$$$$$$$$')
         
     except Exception as e:
-                logger.error(str(traceback.format_exc()))
-                logger.error('the gain/noise load may be error!')
-                try:
-                    url = 'http://12.12.12.251:8888/process_request'
-                    params = {"eid": filepath, "reason": "the gain/noise load may be error! -------"+str(traceback.format_exc()),"stage": 0}
-                    response = make_get_request(url, params)
-                    return None 
-                except:
-                    pass
+        logger.error(str(traceback.format_exc()))
+        logger.error('the gain/noise load may be error!')
+        try:
+            url = 'http://12.12.12.251:8888/process_request'
+            params = {"eid": filepath, "reason": "the gain/noise load may be error! -------"+str(traceback.format_exc()),"stage": 0}
+            response = make_get_request(url, params)
+            return None 
+        except:
+            pass
 
      
     
     try:
         if(os.path.exists(calpath+tid+'_master_bias_bin'+str(binfact)+'_o1.fits')):
-             master_bias1=fits.open(calpath+tid+'_master_bias_bin'+str(binfact)+'_o1.fits')[1].data
-             master_bias2=fits.open(calpath+tid+'_master_bias_bin'+str(binfact)+'_o2.fits')[1].data
+            master_bias1=fits.open(calpath+tid+'_master_bias_bin'+str(binfact)+'_o1.fits')[1].data
+            master_bias2=fits.open(calpath+tid+'_master_bias_bin'+str(binfact)+'_o2.fits')[1].data
         elif (os.path.exists(libpath)):
-             #logger.info(tid+'_master_bias_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
-             #cblist=glob.glob(libpath+tid+'_master_bias_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
-             cblist=glob.glob(libpath+tid+'_master_bias_bin'+str(binfact)+'_o1_*.fits')
+            #logger.info(tid+'_master_bias_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
+            #cblist=glob.glob(libpath+tid+'_master_bias_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
+            cblist=glob.glob(libpath+tid+'_master_bias_bin'+str(binfact)+'_o1_*.fits')
 
-             if(len(cblist)>0):
+            if(len(cblist)>0):
                 cbname=sorted(cblist,reverse=True)[0]
                 
                 master_bias1=fits.open(cbname)[1].data
@@ -311,10 +274,10 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
             master_flat2=fits.getdata(calpath+tid+'_master_flat_'+filterid+'_bin'+str(binfact)+'_o2.fits') 
         else:
              
-             #cfflist=glob.glob(libpath+tid+'_master_flat_'+filterid+'_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
-             cfflist=glob.glob(libpath+tid+'_master_flat_'+filterid+'_bin'+str(binfact)+'_o1_*.fits')
-            
-             if(len(cfflist)>0):
+            #cfflist=glob.glob(libpath+tid+'_master_flat_'+filterid+'_bin'+str(binfact)+'_o1_'+yearmonth+'*.fits')
+            cfflist=glob.glob(libpath+tid+'_master_flat_'+filterid+'_bin'+str(binfact)+'_o1_*.fits')
+        
+            if(len(cfflist)>0):
                 cffname=sorted(cfflist,reverse=True)[0]
                 print('#############',cffname)
 
@@ -326,66 +289,27 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
                 #master_flat2=fits.open(cffname2)[1].data
                 master_flat2=fits.getdata(cffname2)  
                 logger.info('@@@@@@@@@@@@@ the flat calibration will choose in lib: '+ cffname + ' @@@@@@@@@@')
-    except Exception as e:
-                logger.error(str(traceback.format_exc()))
-                logger.error('the calibration(master flat/bias) files load may be error!')
-                try:
-                    url = 'http://12.12.12.251:8888/process_request'
-                    params = {"eid": filepath, "reason": "the calibration(master flat/bias) files load may be error! -------"+str(traceback.format_exc()),"stage": 0}
-                    response = make_get_request(url, params)
-                    return None 
-                except:
-                    pass
-
-
-    logger.info('gain and noise is {},{},{}'.format(gain1,noise1,gain2,noise2))
-    
-    try:
-        
+                
+                
+        logger.info('gain and noise is {},{},{}'.format(gain1,noise1,gain2,noise2))
         flat_corrected1=(img1-master_bias1)/master_flat1
         flat_corrected2=(img2-master_bias2)/master_flat2
+        
     except Exception as e:
-            logger.error(str(traceback.format_exc()))
-            logger.error('jump in exp loop1')
-            try:
-                fr,fc=np.shape(master_flat1)
-                br,bc=np.shape(master_bias1)
-                ir,ic=np.shape(img1)
-                min_r=np.min([fr,br,ir])
-                min_c=np.min([fc,bc,ic])
+        
+        try:
+            url = 'http://12.12.12.251:8888/process_request'
+            params = {"eid": filepath, "reason": "the calibration(master flat/bias) files load may be error! -------"+str(traceback.format_exc()),"stage": 0}
+            response = make_get_request(url, params)
+            return None 
+        except:
+            pass
+        raise(traceback.format_exc())
 
-                figc=8176/binfact
-                figr=6132/binfact
-                bincut=int(1000/binfact)
-                if(fc==bc):
-                    if(fc<ic and fc==bc):
-                        img1=img[:,bincut:int(c/2)]
-                        img2=img[:,0:int(c)-bincut]
-                    elif(ic<fc and ic<bc):
-                        master_flat1=master_flat1[:,bincut:int(fc)]
-                        master_flat2=master_flat2[:,0:int(fc)-bincut]
-                        master_bias1=master_bias1[:,bincut:int(fc)]
-                        master_bias2=master_bias2[:,0:int(fc)-bincut]
-                    elif(ic<fc and ic==bc):
-                        master_flat1=master_flat1[:,bincut:int(fc)]
-                        master_flat2=master_flat2[:,0:int(fc)-bincut]
-                    elif(ic<bc and fc==bc):
-                        master_bias1=master_bias1[:,bincut:int(fc)]
-                        master_bias2=master_bias2[:,0:int(fc)-bincut]
-   
-                flat_corrected1=(img1-master_bias1)/master_flat1
-                flat_corrected2=(img2-master_bias2)/master_flat2
-                 
-            except Exception as e:
-                   logger.error(str(traceback.format_exc()))
-                   logger.error('the preprocessing in (master flat/bias) files may be error! please check the size of image!')
-                   try:
-                        url = 'http://12.12.12.251:8888/process_request'
-                        params = {"eid": filepath, "reason": "the preprocessing in (master flat/bias) files may be error! please check the size of image! -------"+str(traceback.format_exc()),"stage": 0}
-                        response = make_get_request(url, params)
-                        return None 
-                   except:
-                        pass
+
+    
+
+
     # initialize mask and flagmark
     # bad pixel
     mask11=np.ones_like(img1)
@@ -516,6 +440,7 @@ def combine_process(filename,ipath,calpath,opath,libpath,date,repro=0):
         if("OBJCTRA" in hdr_sciimg.keys()):
             ira  = ":".join(hdr_sciimg["OBJCTRA"].split())
             idec = ":".join(hdr_sciimg["OBJCTDEC"].split())
+            logger.warning(hdr_sciimg["OBJCTDEC"])
             ira, idec = d2hms(ira, idec, conv=1)
         elif("RA" in hdr_sciimg.keys()):
             ira  = ":".join(hdr_sciimg["RA"].split())
@@ -631,9 +556,9 @@ def pro_combine(tid_target_filter,date):
     
     #libpath=rootdir+'lib/'
     if(int(date)<20211001):
-       libpath=rootdir+'lib/cal1/'
+        libpath=rootdir+'lib/cal1/'
     else: 
-       libpath=rootdir+'lib/cal3/'
+        libpath=rootdir+'lib/cal3/'
 
     rawpath=rootdir+'reception/'+str(date)+'/raw/'
     fileguide_raw_path=rawpath+'fileguide/'
@@ -692,8 +617,6 @@ def pro_combine(tid_target_filter,date):
             fgl_mskimg.append(listc[1])
             fgl_flgimg.append(listc[2])
             
-           # fgl_uncimg1.append(listc[6])
-           # fgl_uncimg2.append(listc[7])
 
             fgl_bkg.append(listc[3])
             fgl_sciimg.append(listc[4])

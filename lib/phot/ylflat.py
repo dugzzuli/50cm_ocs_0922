@@ -251,12 +251,15 @@ def master_flat(ipath,opath,flatfilelist,tid,filterid,bins):
 
     #check quality of flat
         for i in range(0,len(flatfilelist)):
+            try:
                 img = fits.open(flatfilelist[i])
                 if(quality(img[0].data)):
-                        filelist.append(np.array(img[0].data))
+                    filelist.append(np.array(img[0].data))
                 else:
-                        logger.info('the flat'+str(flatfilelist[i]+'is a bad flat'))
-                        logger.info(np.median(img[0].data)) 
+                    logger.info('the flat'+str(flatfilelist[i]+'is a bad flat'))
+                    logger.info(np.median(img[0].data)) 
+            except:
+                pass
         nfile = len(filelist)
 
         if(nfile<5):
@@ -265,27 +268,27 @@ def master_flat(ipath,opath,flatfilelist,tid,filterid,bins):
         if(nfile>20):
             nfile=20
         for i in range(0, nfile):
-                #logger.info('===========================================')
-                #logger.info('the raw flat is:',filelist[i] )
-                #logger.info('the bias is','mbiasa_std=',np.std(mbiasa),'mbiasb_std=',np.std(mbiasb))
-                r,c=np.shape(np.array(filelist[i].data))
-                binning=int(bins[-1])
-                #imga=filelist[i][:,500:int(c/2)]-mbiasa
-                #imgb=filelist[i][:,int(c/2):int(c)-500]+-mbiasb
-                imga=filelist[i][:,0:int(c/2)]+(-1)*mbiasb
-                imgb=filelist[i][:,int(c/2):int(c)]+(-1)*mbiasb
-                fimga.append(imga)
-                fimgb.append(imgb)
+            #logger.info('===========================================')
+            #logger.info('the raw flat is:',filelist[i] )
+            #logger.info('the bias is','mbiasa_std=',np.std(mbiasa),'mbiasb_std=',np.std(mbiasb))
+            r,c=np.shape(np.array(filelist[i].data))
+            binning=int(bins[-1])
+            #imga=filelist[i][:,500:int(c/2)]-mbiasa
+            #imgb=filelist[i][:,int(c/2):int(c)-500]+-mbiasb
+            imga=filelist[i][:,0:int(c/2)]+(-1)*mbiasb
+            imgb=filelist[i][:,int(c/2):int(c)]+(-1)*mbiasb
+            fimga.append(imga)
+            fimgb.append(imgb)
 
-                #fileda=imga[1484:1583,int(c/2)-144:int(c/2)-44]
-                #filedb=imgb[1484:1583,44:144]
-                #fileda=imga[int(r/2)-int(200/binning):int(r/2)+int(200/binning),int(c/2)-500-int(200/binning)-50:int(c/2)-500-50]
-                 
-                #filedb=imgb[int(r/2)-int(200/binning):int(r/2)+int(200/binning),50:int(200/binning)+50]
-                fileda=imga[int(r/2)-int(200/binning):int(r/2)+int(200/binning),int(c/2)-int(200/binning)-50:int(c/2)-50]
-                filedb=imgb[int(r/2)-int(200/binning):int(r/2)+int(200/binning),50:int(200/binning)+50]
-                fnimga.append(np.array(imga,dtype=float)/sigma_clipped_stats(fileda)[0])
-                fnimgb.append(np.array(imgb,dtype=float)/sigma_clipped_stats(filedb)[0])
+            #fileda=imga[1484:1583,int(c/2)-144:int(c/2)-44]
+            #filedb=imgb[1484:1583,44:144]
+            #fileda=imga[int(r/2)-int(200/binning):int(r/2)+int(200/binning),int(c/2)-500-int(200/binning)-50:int(c/2)-500-50]
+                
+            #filedb=imgb[int(r/2)-int(200/binning):int(r/2)+int(200/binning),50:int(200/binning)+50]
+            fileda=imga[int(r/2)-int(200/binning):int(r/2)+int(200/binning),int(c/2)-int(200/binning)-50:int(c/2)-50]
+            filedb=imgb[int(r/2)-int(200/binning):int(r/2)+int(200/binning),50:int(200/binning)+50]
+            fnimga.append(np.array(imga,dtype=float)/sigma_clipped_stats(fileda)[0])
+            fnimgb.append(np.array(imgb,dtype=float)/sigma_clipped_stats(filedb)[0])
 
         mflata = stats.sigma_clipped_stats(fnimga,axis=0,sigma=2.5)[1]
         mflatb = stats.sigma_clipped_stats(fnimgb,axis=0,sigma=2.5)[1]
